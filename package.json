@@ -1,8 +1,12 @@
 {
-  "name": "babel-plugin-transform-imports",
-  "version": "1.4.1",
-  "description": "Transforms member style imports (import {x} from 'y') into default style imports (import x from 'y/lib/x')",
+  "name": "babel-plugin-transform-modules",
+  "version": "0.0.1",
+  "description": "Transforms member style imports (import {x} from 'y') into default style imports (import x from 'y/lib/x' and import 'y/lib/x/style.css')",
   "keywords": [
+    "babel-plugin-transform-modules",
+    "babel-plugin-transform-imports",
+    "babel-plugin-import",
+    "babel-plugin-component",
     "babel",
     "transform",
     "import",
@@ -12,13 +16,16 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/amctheatres/babel-transform-imports.git"
+    "url": "git+https://github.com/dolymood/babel-plugin-transform-modules.git"
   },
-  "homepage": "https://bitbucket.org/amctheatres/babel-transform-imports",
+  "homepage": "https://github.com/dolymood/babel-plugin-transform-modules#readme",
+  "bugs": {
+    "url": "https://github.com/dolymood/babel-plugin-transform-modules/issues"
+  },
   "scripts": {
     "test": "node_modules/.bin/mocha --compilers js:babel-register"
   },
-  "author": "AMC Theatres",
+  "author": "AMC Theatres, dolymood",
   "license": "ISC",
   "dependencies": {
     "babel-types": "^6.6.0",
