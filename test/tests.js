@@ -5,6 +5,7 @@ import path from 'path';
 function createOptions({
     preventFullImport = false,
     transform = 'react-bootstrap/lib/${member}',
+    style = false,
     camelCase = false,
     kebabCase = false,
     snakeCase = false,
@@ -12,12 +13,14 @@ function createOptions({
     libraryName = 'react-bootstrap'
 }) {
     return {
-        [libraryName]: { transform, preventFullImport, camelCase, kebabCase, snakeCase, skipDefaultConversion }
+        [libraryName]: { transform, style, preventFullImport, camelCase, kebabCase, snakeCase, skipDefaultConversion }
     };
 };
 
 const fullImportRegex = /require\('react-bootstrap'\);$/gm;
 const memberImportRegex = /require\('react-bootstrap\/lib\/.+'\);$/gm;
+const fullImportStyleRegex = /require\('react-bootstrap\/lib\/style\.css'\);$/gm;
+const memberImportStyleRegex = /require\('react-bootstrap\/lib\/.+\/style\.css'\);$/gm;
 
 function occurrences(regex, test) {
     return (test.match(regex) || []).length;
@@ -36,6 +39,8 @@ describe('import transformations', function() {
 
         assert.equal(occurrences(fullImportRegex, code), 1, 'number of full imports should be 1');
         assert.equal(occurrences(memberImportRegex, code), 0, 'number of member imports should be 0');
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
     });
 
     it('should handle namespace imports', function() {
@@ -43,6 +48,8 @@ describe('import transformations', function() {
 
         assert.equal(occurrences(fullImportRegex, code), 1, 'number of full imports should be 1');
         assert.equal(occurrences(memberImportRegex, code), 0, 'number of member imports should be 0');
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
     });
 
     it('should handle member imports', function() {
@@ -50,6 +57,8 @@ describe('import transformations', function() {
 
         assert.equal(occurrences(fullImportRegex, code), 0, 'number of full imports should be 0');
         assert.equal(occurrences(memberImportRegex, code), 2, 'number of member imports should be 2');
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
     });
 
     it('should handle a mix of member and default import styles', function() {
@@ -57,6 +66,8 @@ describe('import transformations', function() {
 
         assert.equal(occurrences(fullImportRegex, code), 1, 'number of full imports should be 1');
         assert.equal(occurrences(memberImportRegex, code), 2, 'number of member imports should be 2');
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
     });
 
     it('should handle relative filenames', function() {
@@ -66,6 +77,50 @@ describe('import transformations', function() {
         const code = transform(`import { LocalThing } from './local/path'`, options);
 
         assert.equal(/require\('.*LocalThing'\);$/m.test(code), true, 'LocalThing should be directly required');
+    });
+});
+
+describe('style plugin option', function() {
+    var defStyleOptions = createOptions({ style: true });
+    it('should add style.css - default imports', function() {
+        const code = transform(`import Bootstrap from 'react-bootstrap';`, defStyleOptions);
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 1, 'number of full imports with style should be 1');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+    });
+    it('should add style.css - namespace imports', function() {
+        const code = transform(`import * as Bootstrap from 'react-bootstrap';`, defStyleOptions);
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 1, 'number of full imports with style should be 1');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+    });
+    it('should add each member style.css - member imports', function() {
+        const code = transform(`import { Grid, Row as row } from 'react-bootstrap';`, defStyleOptions);
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of full imports with style should be 0');
+        assert.equal(occurrences(memberImportStyleRegex, code), 2, 'number of member imports with style should be 2');
+    });
+    it('should add each member index.css - member imports', function() {
+        const code = transform(`import { Grid, Row as row } from 'react-bootstrap';`, createOptions({ style: 'index' }));
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of full imports with style should be 0');
+        assert.equal(occurrences(/require\('react-bootstrap\/lib\/.+\/index\.css'\);$/gm, code), 2, 'number of member imports with style should be 2');
+    });
+    it('should add full style.css but not add each member style.css - a mix of member and default import styles', function() {
+        const code = transform(`import Bootstrap, { Grid, Row as row } from 'react-bootstrap';`, defStyleOptions);
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 1, 'number of full imports with style should be 1');
+        assert.equal(occurrences(memberImportStyleRegex, code), 0, 'number of member imports with style should be 0');
+    });
+
+    it('should add style.css - relative filenames', function() {
+        const libraryName = path.join(__dirname, '../local/path');
+        const _transform = path.join(__dirname, '../local/path/${member}');
+        const options = createOptions({ libraryName, transform: _transform, style: true });
+        const code = transform(`import { LocalThing } from './local/path'`, options);
+
+        assert.equal(/require\('.*LocalThing'\);$/m.test(code), true, 'LocalThing should be directly required');
+        assert.equal(/require\('.*LocalThing\/style\.css'\);$/m.test(code), true, 'LocalThing style.css should be required too');
     });
 });
 

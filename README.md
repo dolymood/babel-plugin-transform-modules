@@ -1,22 +1,25 @@
-# babel-plugin-transform-imports
+# babel-plugin-transform-modules
+
+Fork https://bitbucket.org/amctheatres/babel-transform-imports , and support import style files like [babel-plugin-component](https://github.com/QingWei-Li/babel-plugin-component).
 
 Transforms member style imports:
 
 ```javascript
-import { Row, Grid as MyGrid } from 'react-bootstrap';
-import { merge } from 'lodash';
+import { Dialog } from 'cube-ui'
 ```
 
 ...into default style imports:
 
 ```javascript
-import Row from 'react-bootstrap/lib/Row';
-import MyGrid from 'react-bootstrap/lib/Grid';
-import merge from 'lodash/merge';
+import Dialog from 'cube-ui/lib/dialog'
 ```
 
-*Note: this plugin is not restricted to the react-bootstrap and lodash
-libraries.  You may use it with any library.*
+If set `style:true` config, then it will be transformed to:
+
+```javascript
+import Dialog from 'cube-ui/lib/dialog'
+import 'cube-ui/lib/dialog/style.css'
+```
 
 ## That's stupid, why would you do that?
 
@@ -60,7 +63,7 @@ import * as Bootstrap from 'react-bootstrap';
 ## Installation
 
 ```
-npm install --save-dev babel-plugin-transform-imports
+npm install --save-dev babel-plugin-transform-modules
 ```
 
 ## Usage
@@ -70,13 +73,9 @@ npm install --save-dev babel-plugin-transform-imports
 ```json
 {
     "plugins": [
-        ["transform-imports", {
-            "react-bootstrap": {
-                "transform": "react-bootstrap/lib/${member}",
-                "preventFullImport": true
-            },
-            "lodash": {
-                "transform": "lodash/${member}",
+        ["transform-modules", {
+            "cube-ui": {
+                "transform": "cube-ui/lib/${member}",
                 "preventFullImport": true
             }
         }]
@@ -90,14 +89,14 @@ In cases where the provided default string replacement transformation is not
 sufficient (for example, needing to execute a RegExp on the import name), you
 may instead provide a path to a .js file which exports a function to run
 instead.  Keep in mind that the .js file will be `require`d relative from this
-plugin's path, likely located in `/node_modules/babel-plugin-transform-imports`.
+plugin's path, likely located in `/node_modules/babel-plugin-transform-modules`.
 You may provide any filename, as long as it ends with `.js`.
 
 .babelrc:
 ```json
 {
     "plugins": [
-        ["transform-imports", {
+        ["transform-modules", {
             "my-library": {
                 "transform": "../../path/to/transform.js",
                 "preventFullImport": true
@@ -109,7 +108,21 @@ You may provide any filename, as long as it ends with `.js`.
 
 /path/to/transform.js:
 ```js
-module.exports = function(importName) {
+module.exports = function(importName, styleName) {
+    if (styleName) {
+        // set `style: true` option to transform style
+        if (importName === styleName) {
+            // full import
+            // eg: `import xx from 'my-library'`
+            // will be transformed add `require('my-library/etc/style.css')`
+            return 'my-library/etc/' + styleName + '.css'
+        } else {
+            // member import
+            // eg: `import {xx} from 'my-library'`
+            // will be transformed add `require('my-library/etc/XX/style.css')`
+            return 'my-library/etc/' + importName.toUpperCase() + '/' + styleName + '.css'
+        }
+    }
     return 'my-library/etc/' + importName.toUpperCase();
 };
 ```
@@ -135,7 +148,7 @@ module: {
             loader: 'babel-loader',
                 query: {
                     plugins: [
-                        [require('babel-plugin-transform-imports'), {
+                        [require('babel-plugin-transform-modules'), {
                             "my-library": {
                                 "transform": function(importName) {
                                     return 'my-library/etc/' + importName.toUpperCase();
@@ -156,6 +169,7 @@ module: {
 | Name | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
 | `transform` | `string` | yes | `undefined` | The library name to use instead of the one specified in the import statement.  ${member} will be replaced with the member, aka Grid/Row/Col/etc.  Alternatively, pass a path to a .js file which exports a function to process the transform (see Advanced Transformations) |
+| `style` | `boolean` | no | `false` | Whether or not auto add css import. |
 | `preventFullImport` | `boolean` | no | `false` | Whether or not to throw when an import is encountered which would cause the entire module to be imported. |
 | `camelCase` | `boolean` | no | `false` | When set to true, runs ${member} through _.camelCase. |
 | `kebabCase` | `boolean` | no | `false` | When set to true, runs ${member} through _.kebabCase. |

@@ -5,10 +5,10 @@ var snake = require('lodash.snakecase');
 var pathLib = require('path');
 
 function barf(msg) {
-    throw new Error('babel-plugin-transform-imports: ' + msg);
+    throw new Error('babel-plugin-transform-modules: ' + msg);
 }
 
-function transform(transformOption, importName) {
+function transform(transformOption, importName, styleName) {
     var isFunction = typeof transformOption === 'function';
     if (/\.js$/i.test(transformOption) || isFunction) {
         var transformFn;
@@ -23,10 +23,24 @@ function transform(transformOption, importName) {
             barf('expected transform function to be exported from ' + transformOption);
         }
 
-        return transformFn(importName);
+        return transformFn(importName, styleName);
     }
-
+    if (styleName) {
+        if (importName === styleName) {
+            importName += '.css'
+        } else {
+            importName += '/' + styleName + '.css'
+        }
+    }
     return transformOption.replace(/\$\{\s?member\s?\}/ig, importName);
+}
+
+function handleStyleImport(opts, styleTransforms, importName) {
+    if (opts.style) {
+        var styleName = opts.style === true ? 'style' : String(opts.style);
+        var replace = transform(opts.transform, importName || styleName, styleName);
+        styleTransforms.push(types.importDeclaration([], types.stringLiteral(replace)))
+    }
 }
 
 module.exports = function() {
@@ -57,6 +71,7 @@ module.exports = function() {
                     }
 
                     var transforms = [];
+                    var styleTransforms = [];
 
                     var fullImports = path.node.specifiers.filter(function(specifier) { return specifier.type !== 'ImportSpecifier' });
                     var memberImports = path.node.specifiers.filter(function(specifier) { return specifier.type === 'ImportSpecifier' });
@@ -78,8 +93,9 @@ module.exports = function() {
                             //      import Bootstrap from 'react-bootstrap';
                             transforms.push(types.importDeclaration(fullImports, types.stringLiteral(source)));
                         }
+                        handleStyleImport(opts, styleTransforms);
                     }
-
+                    var hasFullStyleImports = styleTransforms.length > 0
                     memberImports.forEach(function(memberImport) {
                         // Examples of member imports:
                         //      import { member } from 'module'; (ImportSpecifier)
@@ -107,10 +123,13 @@ module.exports = function() {
                             [newImportSpecifier],
                             types.stringLiteral(replace)
                         ));
+                        !hasFullStyleImports && handleStyleImport(opts, styleTransforms, importName);
                     });
 
                     if (transforms.length > 0) {
-                        path.replaceWithMultiple(transforms);
+                        path.replaceWithMultiple(transforms.concat(styleTransforms));
+                    } else if (styleTransforms.length) {
+                        path.insertAfter(styleTransforms);
                     }
                 }
             }
