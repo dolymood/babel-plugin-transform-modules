@@ -142,6 +142,14 @@ describe('kebabCase plugin option', function() {
 
         assert.notEqual(code.indexOf('kebab-me'), -1, 'member name KababMe should be transformed to kebab-me');
     });
+    it('should use kebab casing when set - with style', function() {
+        const options = createOptions({ kebabCase: true, style: true });
+
+        const code = transform(`import { KebabMe } from 'react-bootstrap';`, options);
+
+        assert.notEqual(code.indexOf('kebab-me'), -1, 'member name KababMe should be transformed to kebab-me');
+        assert.notEqual(code.indexOf('kebab-me/style.css'), -1, 'member name KababMe should be transformed to kebab-me with style.css');
+    });
 });
 
 describe('snakeCase plugin option', function() {
