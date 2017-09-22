@@ -1,4 +1,3 @@
-var types = require('babel-types');
 var camel = require('lodash.camelcase');
 var kebab = require('lodash.kebabcase');
 var snake = require('lodash.snakecase');
@@ -35,7 +34,7 @@ function transform(transformOption, importName, styleName) {
     return transformOption.replace(/\$\{\s?member\s?\}/ig, importName);
 }
 
-function handleStyleImport(opts, styleTransforms, importName) {
+function handleStyleImport(opts, styleTransforms, types, importName) {
     if (opts.style) {
         var styleName = opts.style === true ? 'style' : String(opts.style);
         var replace = transform(opts.transform, importName || styleName, styleName);
@@ -43,7 +42,8 @@ function handleStyleImport(opts, styleTransforms, importName) {
     }
 }
 
-module.exports = function() {
+module.exports = function(babel) {
+    var types = babel.types
     return {
         visitor: {
             ImportDeclaration: function (path, state) {
@@ -93,7 +93,7 @@ module.exports = function() {
                             //      import Bootstrap from 'react-bootstrap';
                             transforms.push(types.importDeclaration(fullImports, types.stringLiteral(source)));
                         }
-                        handleStyleImport(opts, styleTransforms);
+                        handleStyleImport(opts, styleTransforms, types);
                     }
                     var hasFullStyleImports = styleTransforms.length > 0
                     memberImports.forEach(function(memberImport) {
@@ -123,7 +123,7 @@ module.exports = function() {
                             [newImportSpecifier],
                             types.stringLiteral(replace)
                         ));
-                        !hasFullStyleImports && handleStyleImport(opts, styleTransforms, importName);
+                        !hasFullStyleImports && handleStyleImport(opts, styleTransforms, types, importName);
                     });
 
                     if (transforms.length > 0) {
