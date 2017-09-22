@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-transform-modules",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Transforms member style imports (import {x} from 'y') into default style imports (import x from 'y/lib/x' and import 'y/lib/x/style.css')",
   "keywords": [
     "babel-plugin-transform-modules",
@@ -9,9 +9,7 @@
     "babel-plugin-component",
     "babel",
     "transform",
-    "import",
-    "react-bootstrap",
-    "lodash"
+    "import"
   ],
   "main": "index.js",
   "repository": {
@@ -28,7 +26,6 @@
   "author": "AMC Theatres, dolymood",
   "license": "ISC",
   "dependencies": {
-    "babel-types": "^6.6.0",
     "lodash.camelcase": "^4.3.0",
     "lodash.kebabcase": "^4.1.1",
     "lodash.snakecase": "^4.1.1"
