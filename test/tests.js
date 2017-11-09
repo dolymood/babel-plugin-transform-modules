@@ -122,6 +122,18 @@ describe('style plugin option', function() {
         assert.equal(/require\('.*LocalThing'\);$/m.test(code), true, 'LocalThing should be directly required');
         assert.equal(/require\('.*LocalThing\/style\.css'\);$/m.test(code), true, 'LocalThing style.css should be required too');
     });
+
+    it('should ignore some style modules - member imports', function() {
+        const options = createOptions({
+            style: {
+                ignore: ['Row']
+            }
+        });
+        const code = transform(`import { Grid, Row as row } from 'react-bootstrap';`, options);
+
+        assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of full imports with style should be 0');
+        assert.equal(occurrences(/require\('react-bootstrap\/lib\/.+\/style\.css'\);$/gm, code), 1, 'number of member imports with style should be 1');
+    });
 });
 
 describe('camelCase plugin option', function() {
@@ -149,6 +161,22 @@ describe('kebabCase plugin option', function() {
 
         assert.notEqual(code.indexOf('kebab-me'), -1, 'member name KababMe should be transformed to kebab-me');
         assert.notEqual(code.indexOf('kebab-me/style.css'), -1, 'member name KababMe should be transformed to kebab-me with style.css');
+    });
+    it('should use kebab casing when set - with style ignore', function() {
+        const options = createOptions({
+            kebabCase: true,
+            style: {
+                name: 'sty',
+                ignore: ['kebab-other']
+            }
+        });
+
+        const code = transform(`import { KebabMe, KebabOther } from 'react-bootstrap';`, options);
+
+        assert.notEqual(code.indexOf('kebab-me'), -1, 'member name KababMe should be transformed to kebab-me');
+        assert.notEqual(code.indexOf('kebab-other'), -1, 'member name KebabOther should be transformed to kebab-me');
+        assert.notEqual(code.indexOf('kebab-me/sty.css'), -1, 'member name KababMe should be transformed to kebab-me with sty.css');
+        assert.equal(code.indexOf('kebab-other/sty.css'), -1, 'member name KebabOther should be transformed to kebab-other without sty.css');
     });
 });
 

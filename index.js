@@ -34,16 +34,44 @@ function transform(transformOption, importName, styleName) {
     return transformOption.replace(/\$\{\s?member\s?\}/ig, importName);
 }
 
+function parseStyleOption(style) {
+    var styleOption;
+    if (style === true) {
+        styleOption = {
+            name: 'style',
+            ignore: []
+        };
+    } else if (typeof style === 'string') {
+        styleOption = {
+            name: style,
+            ignore: []
+        };
+    } else {
+        styleOption = {
+            name: style.name || 'style',
+            ignore: style.ignore || []
+        };
+    }
+    return styleOption;
+}
 function handleStyleImport(opts, styleTransforms, types, importName) {
     if (opts.style) {
-        var styleName = opts.style === true ? 'style' : String(opts.style);
-        var replace = transform(opts.transform, importName || styleName, styleName);
+        var styleOption = parseStyleOption(opts.style);
+        var styleName = styleOption.name;
+        var ignore = styleOption.ignore;
+        if (!importName) {
+            importName = styleName;
+        }
+        if (ignore.indexOf(importName) >= 0) {
+            return
+        }
+        var replace = transform(opts.transform, importName, styleName);
         styleTransforms.push(types.importDeclaration([], types.stringLiteral(replace)))
     }
 }
 
 module.exports = function(babel) {
-    var types = babel.types
+    var types = babel.types;
     return {
         visitor: {
             ImportDeclaration: function (path, state) {
