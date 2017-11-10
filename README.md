@@ -1,4 +1,5 @@
-# babel-plugin-transform-modules
+# babel-plugin-transform-modules [![Build Status](https://travis-ci.org/dolymood/babel-plugin-transform-modules.svg?branch=master)](https://travis-ci.org/dolymood/babel-plugin-transform-modules?branch=master) [![codecov.io](http://codecov.io/github/dolymood/babel-plugin-transform-modules/coverage.svg?branch=master)](http://codecov.io/github/dolymood/babel-plugin-transform-modules?branch=master)
+
 
 Fork https://bitbucket.org/amctheatres/babel-transform-imports , and support import style files like [babel-plugin-component](https://github.com/QingWei-Li/babel-plugin-component).
 
