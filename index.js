@@ -7,7 +7,7 @@ function barf(msg) {
     throw new Error('babel-plugin-transform-modules: ' + msg);
 }
 
-function transform(transformOption, importName, styleName) {
+function transform(transformOption, importName, styleName, hasImportName) {
     var isFunction = typeof transformOption === 'function';
     if (/\.js$/i.test(transformOption) || isFunction) {
         var transformFn;
@@ -22,10 +22,10 @@ function transform(transformOption, importName, styleName) {
             barf('expected transform function to be exported from ' + transformOption);
         }
 
-        return transformFn(importName, styleName);
+        return transformFn(importName, styleName, hasImportName);
     }
     if (styleName) {
-        if (importName === styleName) {
+        if (!hasImportName && importName === styleName) {
             importName += '.css'
         } else {
             importName += '/' + styleName + '.css'
@@ -59,13 +59,14 @@ function handleStyleImport(opts, styleTransforms, types, importName) {
         var styleOption = parseStyleOption(opts.style);
         var styleName = styleOption.name;
         var ignore = styleOption.ignore;
+        var hasImportName = !!importName;
         if (!importName) {
             importName = styleName;
         }
         if (ignore.indexOf(importName) >= 0) {
             return
         }
-        var replace = transform(opts.transform, importName, styleName);
+        var replace = transform(opts.transform, importName, styleName, hasImportName);
         styleTransforms.push(types.importDeclaration([], types.stringLiteral(replace)))
     }
 }

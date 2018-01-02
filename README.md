@@ -115,10 +115,10 @@ You may provide any filename, as long as it ends with `.js`.
 
 /path/to/transform.js:
 ```js
-module.exports = function(importName, styleName) {
+module.exports = function(importName, styleName, hasImportName) {
     if (styleName) {
         // set `style: true` option to transform style
-        if (importName === styleName) {
+        if (!hasImportName && importName === styleName) {
             // full import
             // eg: `import xx from 'my-library'`
             // will be transformed add `require('my-library/etc/style.css')`

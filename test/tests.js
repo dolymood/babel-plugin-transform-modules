@@ -125,14 +125,15 @@ describe('style plugin option', function() {
 
     it('should ignore some style modules - member imports', function() {
         const options = createOptions({
+            kebabCase: true,
             style: {
-                ignore: ['Row']
+                ignore: ['row']
             }
         });
-        const code = transform(`import { Grid, Row as row } from 'react-bootstrap';`, options);
+        const code = transform(`import { Style, Grid, Row as row } from 'react-bootstrap';`, options);
 
         assert.equal(occurrences(fullImportStyleRegex, code), 0, 'number of full imports with style should be 0');
-        assert.equal(occurrences(/require\('react-bootstrap\/lib\/.+\/style\.css'\);$/gm, code), 1, 'number of member imports with style should be 1');
+        assert.equal(occurrences(/require\('react-bootstrap\/lib\/.+\/style\.css'\);$/gm, code), 2, 'number of member imports with style should be 2');
     });
 });
 
